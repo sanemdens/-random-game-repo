@@ -178,7 +178,7 @@
             },
             
             reset: function() {
-                this.y = canvas.height / 3;
+                this.y = canvas.height / 3; // Daha yukarıdan başlasın
                 this.velocity = -1; // Çok hafif yukarı hareket
                 this.floatOffset = 0;
             },
@@ -226,34 +226,6 @@
                 ctx.lineTo(this.x, this.y + this.height/2);
                 ctx.lineTo(this.x + this.width/3, this.y + this.height/3);
                 ctx.fill();
-            }
-        };
-            
-           update: function() {
-                this.velocity += gravity;
-                this.y += this.velocity;
-                
-                // Zemin ve tavan kontrolleri
-                 if (this.y + this.height/2 > canvas.height - 20) {
-                    this.y = canvas.height - 20 - this.height/2;
-                    this.velocity = 0;
-                    gameOver();
-                }
-                
-                if (this.y - this.height/2 < 0) {
-                    this.y = this.height/2;
-                    this.velocity = 0;
-                }
-            },
-            
-            jump: function() {
-                this.velocity = -3;
-            },
-            
-            reset: function() {
-                this.y = canvas.height / 3; // Daha yukarıdan başlasın
-                this.velocity = -1;
-                this.floatOffset = 0;
             }
         };
         
