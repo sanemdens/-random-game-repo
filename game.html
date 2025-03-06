@@ -1220,7 +1220,6 @@
             }
         };
 
-        // Create a pipe
         function createPipe() {
             const minHeight = minPipeHeight;
             const maxHeight = canvas.height - pipeGap - minHeight;
@@ -1243,7 +1242,7 @@
                 moveSpeed: 0.5,
                 moveDistance: 50,
                 startY: height,
-                draw: function() {
+        draw: function() {
                     ctx.save();
                     
                     // For rotating pipes, rotate around center
