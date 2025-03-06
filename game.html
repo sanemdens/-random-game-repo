@@ -1,4 +1,377 @@
-<!DOCTYPE html>
+// Add main game functions
+        function startGame() {
+            // Resume audio context if it's suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Set up game based on selected mode
+            switch(gameMode) {
+                case 'chill':
+                    gravity = baseGravity * 0.6;
+                    pipeSpeed = 1.2;
+                    pipeSpawnRate = 180;
+                    jumpForce = -4;
+                    break;
+                case 'rush':
+                    gravity = baseGravity * 1.2;
+                    pipeSpeed = 2.5;
+                    pipeSpawnRate = 120;
+                    jumpForce = -6;
+                    break;
+                default: // normal
+                    gravity = baseGravity;
+                    pipeSpeed = 1.5;
+                    pipeSpawnRate = 150;
+                    jumpForce = -5;
+            }
+            
+            gameActive = true;
+            gamePaused = false;
+            score = 0;
+            pipes = [];
+            powerUps = [];
+            munchies = [];
+            nextPipe = 100;
+            nextPowerUp = powerUpSpawnRate;
+            gameSpeed = 1;
+            
+            // Clear any active power-up
+            clearPowerUp();
+            
+            // Reset character
+            weed.reset();
+            
+            // Update UI
+            scoreDisplay.textContent = score;
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            pauseMenu.classList.add('hidden');
+            achievementUnlocked.classList.add('hidden');
+            
+            // Start game loop
+            lastTime = performance.now();
+            gameLoop(lastTime);
+        }
+
+        function gameLoop(timestamp) {
+            if (!gameActive) return;
+            
+            if (gamePaused) {
+                // Just keep the loop going but don't update
+                animationFrameId = requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // Calculate delta time for smooth animations
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            drawBackground();
+            
+            // Update clouds
+            for (let i = 0; i < clouds.length; i++) {
+                clouds[i].update(deltaTime);
+                clouds[i].draw();
+            }
+            
+            // Spawn new pipe
+            nextPipe -= deltaTime * gameSpeed;
+            if (nextPipe <= 0) {
+                pipes.push(createPipe());
+                nextPipe = pipeSpawnRate / gameSpeed;
+            }
+            
+            // Spawn power-ups occasionally
+            nextPowerUp -= deltaTime * gameSpeed;
+            if (nextPowerUp <= 0) {
+                powerUps.push(createPowerUp());
+                nextPowerUp = powerUpSpawnRate / gameSpeed;
+            }
+            
+            // Spawn munchies occasionally (every 3rd pipe)
+            if (nextPipe <= pipeSpawnRate / 3 && Math.random() < 0.3) {
+                munchies.push(createMunchie());
+            }
+            
+            // Update power-up duration
+            if (activePowerUp && powerUpDuration > 0) {
+                powerUpDuration -= deltaTime;
+                powerUpTimer.style.width = `${(powerUpDuration / 5000) * 100}%`;
+                
+                if (powerUpDuration <= 0) {
+                    clearPowerUp();
+                }
+            }
+            
+            // Update and draw pipes
+            for (let i = 0; i < pipes.length; i++) {
+                pipes[i].update(deltaTime);
+                pipes[i].draw();
+                
+                // Remove off-screen pipes
+                if (pipes[i].x + pipes[i].width < 0) {
+                    pipes.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            // Update and draw power-ups
+            for (let i = 0; i < powerUps.length; i++) {
+                const remove = powerUps[i].update(deltaTime);
+                powerUps[i].draw();
+                
+                if (remove) {
+                    powerUps.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            // Update and draw munchies
+            for (let i = 0; i < munchies.length; i++) {
+                const remove = munchies[i].update(deltaTime);
+                munchies[i].draw();
+                
+                if (remove) {
+                    munchies.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            // Update and draw weed
+            weed.update(deltaTime);
+            weed.draw();
+            
+            // Continue game loop
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Draw background with parallax effect
+        function drawBackground() {
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1E90FF');
+            gradient.addColorStop(1, '#87CEEB');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add sun
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(canvas.width - 50, 50, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add sun glow
+            const sunGlow = ctx.createRadialGradient(
+                canvas.width - 50, 50, 30,
+                canvas.width - 50, 50, 60
+            );
+            sunGlow.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+            sunGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            ctx.fillStyle = sunGlow;
+            ctx.beginPath();
+            ctx.arc(canvas.width - 50, 50, 60, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ground
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+            
+            // Grass
+            ctx.fillStyle = '#7CFC00';
+            ctx.fillRect(0, canvas.height - 25, canvas.width, 5);
+            
+            // Add hazy background effect when power-up is active
+            if (activePowerUp) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Game utility functions
+        function togglePause() {
+            gamePaused = !gamePaused;
+            
+            if (gamePaused) {
+                pauseMenu.classList.remove('hidden');
+            } else {
+                pauseMenu.classList.add('hidden');
+            }
+        }
+
+        function resumeGame() {
+            gamePaused = false;
+            pauseMenu.classList.add('hidden');
+        }
+
+        function quitGame() {
+            gameActive = false;
+            gamePaused = false;
+            cancelAnimationFrame(animationFrameId);
+            startScreen.style.display = 'flex';
+            pauseMenu.classList.add('hidden');
+        }
+
+        function gameOver() {
+            gameActive = false;
+            sounds.death();
+            
+            // Check high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('flappyWeedHighScore', highScore);
+            }
+            
+            // Update game over screen
+            finalScoreDisplay.textContent = score;
+            highScoreValueDisplay.textContent = highScore;
+            gameOverScreen.style.display = 'flex';
+            
+            // Show achievement if unlocked
+            if (score >= 20 && !unlockedCharacters.includes('gold')) {
+                achievementUnlocked.classList.remove('hidden');
+            }
+        }
+
+        function toggleSound() {
+            muted = !muted;
+            
+            muteButton.textContent = muted ? '🔇' : '🔊';
+            soundToggle.textContent = muted ? '🔇' : '🔊';
+        }
+
+        // Save score to server (for Telegram integration)
+        function saveScore() {
+            const gameSession = getUrlParameter('session') || 'local';
+            
+            const data = {
+                session: gameSession,
+                score: score,
+                character: characterType,
+                mode: gameMode
+            };
+            
+            try {
+                // Try Telegram WebApp API
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.sendData(JSON.stringify(data));
+                    alert("Score saved!");
+                } else {
+                    // Fallback - can be customized for your backend
+                    localStorage.setItem('flappyWeedLastScore', JSON.stringify(data));
+                    alert("Score saved locally!");
+                }
+            } catch (e) {
+                console.error("Error saving score:", e);
+                alert("Could not save score. Please try again.");
+            }
+        }
+
+        // Get URL parameters (for Telegram integration)
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Initialize the game when the page loads
+        window.onload = init;        // Check collision between two rectangles
+        function checkCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
+            return x1 < x2 + w2 &&
+                   x1 + w1 > x2 &&
+                   y1 < y2 + h2 &&
+                   y1 + h1 > y2;
+        }
+
+        // Check collision with pipe
+        function checkPipeCollision(pipe) {
+            let collision = false;
+            
+            // For rotating pipes, we need more complex collision detection
+            if (pipe.variant === 'rotating') {
+                // Simplified collision for rotating pipes - just check distance from center
+                const pipeCenterX = pipe.x + pipe.width / 2;
+                const pipeCenterY = (pipe.topHeight + pipe.bottomY) / 2;
+                const distance = Math.sqrt(
+                    Math.pow(weed.x - pipeCenterX, 2) +
+                    Math.pow(weed.y - pipeCenterY, 2)
+                );
+                
+                if (distance < 60) { // Approximate collision radius
+                    // Do a more precise check
+                    if (weed.y - weed.height/2 < pipe.topHeight || 
+                        weed.y + weed.height/2 > pipe.bottomY) {
+                        // Check if we're close to the pipe horizontally
+                        if (Math.abs(weed.x - pipeCenterX) < pipe.width/2 + weed.width/2) {
+                            collision = true;
+                        }
+                    }
+                }
+            } 
+            // Regular collision for normal and moving pipes
+            else if (pipe.x < weed.x + weed.width/2 && pipe.x + pipe.width > weed.x - weed.width/2) {
+                // Top pipe collision
+                if (weed.y - weed.height/2 < pipe.topHeight) {
+                    collision = true;
+                }
+                
+                // Bottom pipe collision
+                if (weed.y + weed.height/2 > pipe.bottomY) {
+                    collision = true;
+                }
+            }
+            
+            return collision;
+        }
+
+        // Activate power-up
+        function activatePowerUp(type) {
+            // Clear any existing power-up
+            if (activePowerUp) {
+                clearPowerUp();
+            }
+            
+            activePowerUp = type;
+            sounds.powerUp();
+            
+            // Apply power-up effects
+            if (type === 'slowPuff') {
+                // Slow time
+                gameSpeed = 0.5;
+                powerUpName.textContent = 'Slow Puff';
+            } else if (type === 'highGlide') {
+                // Reduce gravity
+                gravity = baseGravity * 0.3;
+                powerUpName.textContent = 'High Glide';
+            }
+            
+            // Show power-up indicator
+            powerUpIndicator.classList.remove('hidden');
+            powerUpTimer.style.width = '100%';
+            
+            // Set duration
+            powerUpDuration = 5000; // 5 seconds
+        }
+
+        // Clear active power-up
+        function clearPowerUp() {
+            if (!activePowerUp) return;
+            
+            if (activePowerUp === 'slowPuff') {
+                gameSpeed = 1;
+            } else if (activePowerUp === 'highGlide') {
+                gravity = baseGravity;
+            }
+            
+            activePowerUp = null;
+            powerUpDuration = 0;
+            powerUpIndicator.classList.add('hidden');
+        }<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -333,6 +706,7 @@
             <button id="start-button">Start Game</button>
             <button id="mute-button" class="icon-button">🔊</button>
         </div>
+        
         <div class="game-over">
             <h2>Game Over, Man!</h2>
             <p>Your Score: <span id="final-score">0</span></p>
@@ -422,6 +796,7 @@
         let powerUpDuration = 0;
         let powerUpSpawnRate = 800; // Less frequent than pipes
         let nextPowerUp = powerUpSpawnRate;
+
         // Game Audio
         let audioContext;
         try {
@@ -541,6 +916,7 @@
                     sounds.jump();
                 }
             });
+            
             // Add keyboard controls
             document.addEventListener('keydown', function(e) {
                 // Space, up arrow, or W key to jump
@@ -647,6 +1023,7 @@
                 // Update rotation based on velocity
                 const targetRotation = (this.velocity / terminalVelocity) * Math.PI * 0.25;
                 this.rotation += (targetRotation - this.rotation) * 0.1 * deltaTime;
+                
                 // Create smoke particles when moving upward
                 this.smokeTimer -= deltaTime;
                 if (this.velocity < 0 && this.smokeTimer <= 0) {
@@ -757,6 +1134,7 @@
                 ctx.lineTo(this.width/3, this.height/3);
                 ctx.fill();
             },
+            
             drawPurpleLeaf: function() {
                 // Main leaf shape
                 ctx.fillStyle = '#8A2BE2';
@@ -1529,4 +1907,3 @@
     </script>
 </body>
 </html>
-            
