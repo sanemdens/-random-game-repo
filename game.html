@@ -92,6 +92,7 @@
         <div class="start-screen">
             <h2>Flappy Weed</h2>
             <p>Ekrana tıklayarak zıpla, borulardan kaç!</p>
+            <p style="color: #ffff00;">İPUCU: Sık sık tıklayarak kuşu havada tut!</p>
             <button id="start-button">Oyuna Başla</button>
         </div>
         
@@ -117,11 +118,11 @@
         
         let gameActive = false;
         let score = 0;
-        let gravity = 0.25;
+        let gravity = 0.1;
         let pipes = [];
         let pipeWidth = 80;
-        let pipeGap = 150;
-        let pipeSpeed = 2;
+        let pipeGap = 170;
+        let pipeSpeed = 1.5;
         let minPipeHeight = 50;
         let nextPipe = 100;
         
@@ -142,7 +143,6 @@
             width: 40,
             height: 30,
             velocity: 0,
-            jump: -10,
             
              draw: function() {
                 ctx.fillStyle = '#44A244'; // Daha koyu yeşil
@@ -189,13 +189,13 @@
                 ctx.fill();
             },
             
-            update: function() {
+           update: function() {
                 this.velocity += gravity;
                 this.y += this.velocity;
                 
                 // Zemin ve tavan kontrolleri
-                if (this.y + this.height/2 > canvas.height) {
-                    this.y = canvas.height - this.height/2;
+                 if (this.y + this.height/2 > canvas.height - 20) { // Zemini 20 piksel yukarı aldık
+                    this.y = canvas.height - 20 - this.height/2;
                     this.velocity = 0;
                     gameOver();
                 }
@@ -207,12 +207,12 @@
             },
             
             jump: function() {
-                this.velocity = -6;
+                this.velocity = -3;
             },
             
             reset: function() {
-                this.y = canvas.height / 3;
-                this.velocity = 0;
+                this.y = canvas.height / 3; // Daha yukarıdan başlasın
+                this.velocity = -2;
             }
         };
         
@@ -348,14 +348,15 @@
             gameActive = true;
             score = 0;
             pipes = [];
-            nextPipe = 150; // İlk boruyu daha geç gönderin
+            nextPipe = 200; // İlk boruyu çok daha geç gönderin (100'den 200'e)
+            
             weed.reset();
             scoreDisplay.textContent = score;
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
             
-            // Oyun başladığında otomatik olarak bir zıplama yapın
-            weed.velocity = -5;
+            // İlk zıplama ile başlasın - daha güçlü
+            weed.velocity = -3;
             
             gameLoop();
         }
