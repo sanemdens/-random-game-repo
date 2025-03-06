@@ -92,7 +92,7 @@
         <div class="start-screen">
             <h2>Flappy Weed</h2>
             <p>Ekrana tıklayarak zıpla, borulardan kaç!</p>
-            <p style="color: #ffff00;">İPUCU: Sık sık tıklayarak kuşu havada tut!</p>
+            <p style="color: #ffff00; font-weight: bold;">ÖNEMLİ: Sürekli tıklayarak karakteri havada tut!<br>Her 1-2 saniyede bir tıkla!</p>
             <button id="start-button">Oyuna Başla</button>
         </div>
         
@@ -118,13 +118,13 @@
         
         let gameActive = false;
         let score = 0;
-        let gravity = 0.1;
+        let gravity = 0.05;
         let pipes = [];
-        let pipeWidth = 80;
-        let pipeGap = 170;
-        let pipeSpeed = 1.5;
-        let minPipeHeight = 50;
-        let nextPipe = 100;
+        let pipeWidth = 70; // Boruları biraz daha ince yap
+        let pipeGap = 220; // Çok daha geniş boru aralığı
+        let pipeSpeed = 1.0; // Çok daha yavaş boru hareketi
+        let minPipeHeight = 40; // Daha kısa borular
+        let nextPipe = 250; // İlk boru çok geç gelsin
         
         // Telegram web uygulama parametrelerini al
         function getUrlParameter(name) {
@@ -143,6 +143,49 @@
             width: 40,
             height: 30,
             velocity: 0,
+            floatOffset: 0, // Yüzme efekti için
+            floatSpeed: 0.05, // Yüzme hızı
+    
+    update: function() {
+        // Uygula yerçekimini ama çok hafif
+        this.velocity += gravity;
+        
+        // Hafif yüzme hareketi ekle
+        this.floatOffset += this.floatSpeed;
+        let floatEffect = Math.sin(this.floatOffset) * 0.5;
+        this.y += this.velocity + floatEffect;
+        
+        // Düşme hızını sınırla - terminal hız
+        if (this.velocity > 3) {
+            this.velocity = 3;
+        }
+        
+        // Zemin ve tavan kontrolleri
+        if (this.y + this.height/2 > canvas.height - 20) {
+            this.y = canvas.height - 20 - this.height/2;
+            this.velocity = 0;
+            gameOver();
+        }
+        
+        if (this.y - this.height/2 < 0) {
+            this.y = this.height/2;
+            this.velocity = 0;
+        }
+    },
+    
+    // Zıplama gücünü optimize edelim - süper güçlü zıplama
+    jump: function() {
+        this.velocity = -3; // Çok daha yumuşak zıplama
+    },
+    
+    reset: function() {
+        this.y = canvas.height / 3;
+        this.velocity = -1; // Çok hafif yukarı hareket
+        this.floatOffset = 0;
+    },
+    
+    // Draw fonksiyonu aynı kalabilir...
+};
             
              draw: function() {
                 ctx.fillStyle = '#44A244'; // Daha koyu yeşil
@@ -194,7 +237,7 @@
                 this.y += this.velocity;
                 
                 // Zemin ve tavan kontrolleri
-                 if (this.y + this.height/2 > canvas.height - 20) { // Zemini 20 piksel yukarı aldık
+                 if (this.y + this.height/2 > canvas.height - 20) {
                     this.y = canvas.height - 20 - this.height/2;
                     this.velocity = 0;
                     gameOver();
@@ -212,7 +255,8 @@
             
             reset: function() {
                 this.y = canvas.height / 3; // Daha yukarıdan başlasın
-                this.velocity = -2;
+                this.velocity = -1;
+                this.floatOffset = 0;
             }
         };
         
@@ -348,15 +392,15 @@
             gameActive = true;
             score = 0;
             pipes = [];
-            nextPipe = 200; // İlk boruyu çok daha geç gönderin (100'den 200'e)
+            nextPipe = 250; // İlk boru çok geç gelsin
             
             weed.reset();
             scoreDisplay.textContent = score;
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
             
-            // İlk zıplama ile başlasın - daha güçlü
-            weed.velocity = -3;
+            // Başlangıçta çok hafif bir yukarı hareket
+            weed.velocity = -0.5;
             
             gameLoop();
         }
