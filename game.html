@@ -207,7 +207,7 @@
             },
             
             jump: function() {
-                this.velocity = -8;
+                this.velocity = -6;
             },
             
             reset: function() {
@@ -348,11 +348,15 @@
             gameActive = true;
             score = 0;
             pipes = [];
-            nextPipe = 100;
+            nextPipe = 150; // İlk boruyu daha geç gönderin
             weed.reset();
             scoreDisplay.textContent = score;
             startScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
+            
+            // Oyun başladığında otomatik olarak bir zıplama yapın
+            weed.velocity = -5;
+            
             gameLoop();
         }
         
