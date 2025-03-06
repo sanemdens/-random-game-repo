@@ -117,7 +117,7 @@
         
         let gameActive = false;
         let score = 0;
-        let gravity = 0.5;
+        let gravity = 0.25;
         let pipes = [];
         let pipeWidth = 80;
         let pipeGap = 150;
@@ -144,23 +144,48 @@
             velocity: 0,
             jump: -10,
             
-            draw: function() {
-                // Basit yeşil yaprak çiz
-                ctx.fillStyle = '#4CAF50';
+             draw: function() {
+                ctx.fillStyle = '#44A244'; // Daha koyu yeşil
                 
                 // Ana yaprak
                 ctx.beginPath();
                 ctx.ellipse(this.x, this.y, this.width/2, this.height/2, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Detaylar
-                ctx.fillStyle = '#2E7D32';
+                // Yaprak damarları
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.ellipse(this.x - 5, this.y, 5, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.moveTo(this.x - this.width/3, this.y);
+                ctx.lineTo(this.x + this.width/3, this.y);
+                ctx.stroke();
                 
                 ctx.beginPath();
-                ctx.ellipse(this.x + 5, this.y, 5, 10, 0, 0, Math.PI * 2);
+                ctx.moveTo(this.x, this.y - this.height/3);
+                ctx.lineTo(this.x, this.y + this.height/3);
+                ctx.stroke();
+                
+                // Yaprak detayları
+                ctx.fillStyle = '#388E3C';
+                // Sol yaprak parçası
+                ctx.beginPath();
+                ctx.moveTo(this.x - this.width/2, this.y);
+                ctx.lineTo(this.x - this.width/4, this.y - this.height/4);
+                ctx.lineTo(this.x, this.y);
+                ctx.fill();
+                
+                // Sağ yaprak parçası
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width/2, this.y);
+                ctx.lineTo(this.x + this.width/4, this.y - this.height/4);
+                ctx.lineTo(this.x, this.y);
+                ctx.fill();
+                
+                // Alt yaprak parçası
+                ctx.beginPath();
+                ctx.moveTo(this.x - this.width/3, this.y + this.height/3);
+                ctx.lineTo(this.x, this.y + this.height/2);
+                ctx.lineTo(this.x + this.width/3, this.y + this.height/3);
                 ctx.fill();
             },
             
@@ -186,7 +211,7 @@
             },
             
             reset: function() {
-                this.y = canvas.height / 2;
+                this.y = canvas.height / 3;
                 this.velocity = 0;
             }
         };
