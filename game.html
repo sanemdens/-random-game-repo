@@ -145,49 +145,45 @@
             velocity: 0,
             floatOffset: 0, // Yüzme efekti için
             floatSpeed: 0.05, // Yüzme hızı
-    
-    update: function() {
-        // Uygula yerçekimini ama çok hafif
-        this.velocity += gravity;
-        
-        // Hafif yüzme hareketi ekle
-        this.floatOffset += this.floatSpeed;
-        let floatEffect = Math.sin(this.floatOffset) * 0.5;
-        this.y += this.velocity + floatEffect;
-        
-        // Düşme hızını sınırla - terminal hız
-        if (this.velocity > 3) {
-            this.velocity = 3;
-        }
-        
-        // Zemin ve tavan kontrolleri
-        if (this.y + this.height/2 > canvas.height - 20) {
-            this.y = canvas.height - 20 - this.height/2;
-            this.velocity = 0;
-            gameOver();
-        }
-        
-        if (this.y - this.height/2 < 0) {
-            this.y = this.height/2;
-            this.velocity = 0;
-        }
-    },
-    
-    // Zıplama gücünü optimize edelim - süper güçlü zıplama
-    jump: function() {
-        this.velocity = -3; // Çok daha yumuşak zıplama
-    },
-    
-    reset: function() {
-        this.y = canvas.height / 3;
-        this.velocity = -1; // Çok hafif yukarı hareket
-        this.floatOffset = 0;
-    },
-    
-    // Draw fonksiyonu aynı kalabilir...
-};
             
-             draw: function() {
+            update: function() {
+                // Uygula yerçekimini ama çok hafif
+                this.velocity += gravity;
+                
+                // Hafif yüzme hareketi ekle
+                this.floatOffset += this.floatSpeed;
+                let floatEffect = Math.sin(this.floatOffset) * 0.5;
+                this.y += this.velocity + floatEffect;
+                
+                // Düşme hızını sınırla - terminal hız
+                if (this.velocity > 3) {
+                    this.velocity = 3;
+                }
+                
+                // Zemin ve tavan kontrolleri
+                if (this.y + this.height/2 > canvas.height - 20) {
+                    this.y = canvas.height - 20 - this.height/2;
+                    this.velocity = 0;
+                    gameOver();
+                }
+                
+                if (this.y - this.height/2 < 0) {
+                    this.y = this.height/2;
+                    this.velocity = 0;
+                }
+            },
+            
+            jump: function() {
+                this.velocity = -3; // Çok daha yumuşak zıplama
+            },
+            
+            reset: function() {
+                this.y = canvas.height / 3;
+                this.velocity = -1; // Çok hafif yukarı hareket
+                this.floatOffset = 0;
+            },
+            
+            draw: function() {
                 ctx.fillStyle = '#44A244'; // Daha koyu yeşil
                 
                 // Ana yaprak
@@ -230,7 +226,8 @@
                 ctx.lineTo(this.x, this.y + this.height/2);
                 ctx.lineTo(this.x + this.width/3, this.y + this.height/3);
                 ctx.fill();
-            },
+            }
+        };
             
            update: function() {
                 this.velocity += gravity;
